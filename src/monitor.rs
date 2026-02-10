@@ -14,17 +14,16 @@ extern crate md5;
 use std::fs;
 use std::path::PathBuf;
 
-use libafl::inputs::{HasMutatorBytes, ValueInput};
-use libafl::prelude::{BytesInput, Corpus, InMemoryCorpus, Input, OnDiskCorpus};
+use libafl::prelude::{BytesInput, Corpus, HasBytesVec, InMemoryCorpus, Input, OnDiskCorpus};
 use libafl::state::{HasCorpus, StdState};
 use libafl_bolts::rands::RomuDuoJrRand;
 
 pub fn store_testcases(
     state: &mut StdState<
-        InMemoryCorpus<ValueInput<Vec<u8>>>,
-        ValueInput<Vec<u8>>,
+        BytesInput,
+        InMemoryCorpus<BytesInput>,
         RomuDuoJrRand,
-        OnDiskCorpus<ValueInput<Vec<u8>>>,
+        OnDiskCorpus<BytesInput>,
     >,
     output_dir: String,
 ) {
@@ -36,16 +35,14 @@ pub fn store_testcases(
     for id in corpus.ids() {
         let testcase: std::cell::RefMut<libafl::prelude::Testcase<BytesInput>> =
             corpus.get(id).unwrap().borrow_mut();
-        let exec_time = testcase.exec_time().map(|s| s.as_secs()).unwrap_or(0);
+        let executions = testcase.executions();
         let scheduled_count = testcase.scheduled_count();
         let parent_id = if testcase.parent_id().is_some() {
             usize::from(testcase.parent_id().unwrap()) as i32
         } else {
             -1
         };
-        println!(
-            "Corpus {id}: exec_time {exec_time}, scheduled_count {scheduled_count}, parent_id {parent_id}"
-        );
+        println!("Corpus {id}: executions {executions}, scheduled_count {scheduled_count}, parent_id {parent_id}");
         let x = testcase.input().as_ref().unwrap();
         store_testcase(x, &output_dir, Some(id.to_string()));
     }
@@ -58,7 +55,7 @@ pub fn store_testcase(input: &BytesInput, output_dir: &String, name: Option<Stri
         name.unwrap()
     } else {
         let mut context = md5::Context::new();
-        context.consume(input.mutator_bytes());
+        context.consume(input.bytes());
         format!("{:x}", context.compute())
     };
 

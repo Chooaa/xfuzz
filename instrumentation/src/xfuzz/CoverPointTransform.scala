@@ -300,6 +300,7 @@ class CoverPointMaker(coverPoints: Seq[CoverInfo]) {
        |  parameter COVER_TOTAL = ${covers(info)};
        |  parameter COVER_INDEX;
        |`ifndef SYNTHESIS
+       |`ifdef DIFFTEST
        |  import "DPI-C" function void ${dpicFuncName(info)} (
        |    longint cover_index
        |  );
@@ -308,6 +309,7 @@ class CoverPointMaker(coverPoints: Seq[CoverInfo]) {
        |      $funcCalls
        |    end
        |  end
+       |`endif
        |`endif
        |endmodule
        |""".stripMargin
@@ -435,6 +437,7 @@ object CoverPoint {
         case "line" => LineCoverage.annotations.toSeq
         case "fsm" => FsmCoverage.annotations.toSeq
         case "toggle" => ToggleCoverage.registers.toSeq
+        // case "toggle" => ToggleCoverage.all.toSeq
         case "toggle_full" => ToggleCoverage.all.toSeq
         case "ready_valid" => ReadyValidCoverage.annotations.toSeq
         case _ => Seq()
