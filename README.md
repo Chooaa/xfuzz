@@ -1,3 +1,13 @@
+# SFuzz Project
+
+Changed from XFuzz repo, TBD.
+
+## DUTs
+
+* [NutShell](https://github.com/SeddonShen/nutshell-fv)
+* [RocketChip](https://github.com/iscas-versys/rocket-chip)
+* [BOOM](https://github.com/iscas-versys/riscv-boom-sim)
+
 # xfuzz
 
 This project aims at fuzzing general-purpose hardware designs with software fuzzers.
@@ -16,7 +26,7 @@ The [Makefile](Makefile) provides some simple commands to build the target `libf
 
 ## Example
 
-We have a real example using the rocket-chip (DUT) and Spike (REF) [here](https://github.com/OpenXiangShan/difftest/blob/master/.github/workflows/nightly.yml#L9).
+We have a real example using the rocket-chip (DUT) and Spike (REF) [here](https://github.com/OpenXiangShan/difftest/blob/master/.github/workflows/main.yml#L205-L267).
 This `test-difftest-fuzzing` CI test builds the fuzzer and runs it for 10000 runs (testcases).
 
 Run `fuzzer --help` for a full list of runtime arguments.
@@ -55,14 +65,6 @@ make emu XFUZZ=1 REF=$SPIKE_HOME/difftest/build/riscv64-spike-so LLVM_COVER=1 -j
 ./build/fuzzer -f --max-runs 100 --corpus-input $CORPUS -- --max-cycles 10000
 ```
 
-If you are using [NEMU](https://github.com/OpenXiangShan/NEMU) as the REF with LLVM branch coverage instrumented, you may build it
-with the following commands: `make staticlib CC="clang -fsanitize-coverage=trace-pc-guard -fsanitize-coverage=pc-table -g" CXX="clang++ -fsanitize-coverage=trace-pc-guard -fsanitize-coverage=pc-table -g"`.
-If you are not using LLVM branch coverage, you can simply follow the NEMU docs to build the general-purpose dynamic library `.so` file.
-
-If you are fuzzing the [XiangShan](https://github.com/OpenXiangShan/XiangShan) RISC-V processor, for example, with LLVM branch coverage instrumented NEMU,
-you can use the following command *after* you build the static NEMU library: `make emu XFUZZ=1 REF=$NEMU_HOME/build/libriscv64-nemu-interpreter.a LLVM_COVER=1 EMU_THREADS=16 WITH_CHISELDB=0 WITH_CONSTANTIN=0 EMU_TRACE=1 CONFIG=FuzzConfig`.
-If you are not using LLVM branch coverage, please read the following sections carefully and try the flow by yourself.
-
 ## Integrating Hardware Designs
 
 This repository is not a self-running repository.
@@ -82,14 +84,6 @@ The build commands are self-explained and we assume the users can understand the
 Once you build the simulation executable, [xfuzz](xfuzz) provides some Python scripts to run the fuzzer and parse the outputs.
 
 ## Coverage Instrumentation for Chisel Designs
-
-### CIRCT Passes
-
-To instrument coverage for latest Chisel designs, please use the customized FIRTOOL toolchain from [OpenXiangShan](https://github.com/OpenXiangShan/circt).
-
-### Scala FIRRTL Transforms
-
-**Warning (September 2025): Chisel 3 has been deprecated in DiffTest. If you are using these SFC transforms, please use an older version of DiffTest (no later than [8504ad8](https://github.com/OpenXiangShan/difftest/commit/8504ad8ddf1a3b82f407b983eae14bef34358370)).**
 
 To instrument Chisel coverage metrics into your Chisel designs and use them as the coverage feedback for fuzzing, we provide some useful FIRRTL transforms in the `instrumentation` directory.
 These transforms are mostly migrated from some other projects, including [ekiwi/rfuzz](https://github.com/ekiwi/rfuzz), [compsec-snu/difuzz-rtl](https://github.com/compsec-snu/difuzz-rtl), and [ekiwi/simulator-independent-coverage](https://github.com/ekiwi/simulator-independent-coverage).
@@ -140,5 +134,4 @@ This project has been adopted by researchers from academia and industry.
 We appreciate their contributions for the open-source community.
 Your valuable Issues and Pull Requests are always welcomed.
 
-- PathFuzz: Broadening Fuzzing Horizons with Footprint Memory for CPUs. Institute of Computing Technology, Chinese Academy of Sciences. DAC'24. [DOI (ACM, Open Access)](https://doi.org/10.1145/3649329.3655911), [Presentation (ChinaSys)](https://drive.google.com/file/d/1SfXSfWkwMqqVNuTauUpFvfP5Q5JV2oMw/view?usp=sharing).
-- BMCFuzz: Hybrid Verification of Processors by Synergistic Integration of Bound Model Checking and Fuzzing. Institute of Software, Chinese Academy of Sciences. ICCAD'25. More information on [BMCFuzz GitHub Repo](https://github.com/iscas-versys/BMCFuzz).
+- PathFuzz: Broadening Fuzzing Horizons with Footprint Memory for CPUs. DAC'23. [DOI](https://doi.org/10.1145/3649329.3655911), [Paper](https://www.dac.com/proceedings61), [Presentation (ChinaSys)](https://drive.google.com/file/d/1SfXSfWkwMqqVNuTauUpFvfP5Q5JV2oMw/view?usp=sharing).

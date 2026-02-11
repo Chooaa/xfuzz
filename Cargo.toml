@@ -1,7 +1,7 @@
 [package]
 name = "xfuzz"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 description = "Fuzzing General-Purpose Hardware Designs with Software Fuzzers"
 
 [features]
@@ -9,12 +9,15 @@ default = ["std"]
 std = []
 
 [dependencies]
-libafl = { path = "./LibAFL/crates/libafl/", features = ["prelude"] }
-libafl_bolts = { path = "./LibAFL/crates/libafl_bolts/" }
-clap = { version = "4.5.20", features = ["derive"] }
+libafl = { path = "./LibAFL/libafl/" }
+libafl_bolts = { path = "./LibAFL/libafl_bolts/" }
+clap = { version = "4.0", features = ["derive"] }
 libc = "0.2"
 md5 = "0.7"
 rand = "0.8.5"
+csv = "1.1"
+regex = "1.8"
+chrono = "0.4"
 
 [lib]
 name = "fuzzer"
