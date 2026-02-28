@@ -48,6 +48,8 @@ struct Arguments {
     insert_nop: bool,
     #[clap(default_value_t = false, long)]
     only_fuzz: bool,
+    #[clap(long)]
+    cover_points_file: Option<String>,
 
     // Run options
     #[clap(default_value_t = 1, long)]
@@ -119,7 +121,12 @@ fn main() -> i32 {
         harness::set_formal_cover_rate(args.formal_cover_rate);
         harness::set_insert_nop(args.insert_nop);
         harness::set_only_fuzz(args.only_fuzz);
-        harness::set_cover_points();
+        if args.cover_points_file.is_none() {
+            println!("No cover points file provided, fuzzer will run with empty accumulated coverage");
+        } else {
+            println!("Cover points file: {:?}", args.cover_points_file);
+            harness::set_cover_points(args.cover_points_file.clone().unwrap());
+        }
         if corpus_input.is_some() {
             harness::set_corpus_num(corpus_input.clone().unwrap());
         }

@@ -207,7 +207,7 @@ pub(crate) fn fuzz_harness(input: &BytesInput) -> ExitKind {
     if do_panic {
         println!("<<<<<< Bug triggered >>>>>>");
         // store the accumulated coverage points
-        store_cover_points(env::var("COVER_POINTS_OUT").unwrap()+"/cover_points.csv");
+        store_cover_points(env::var("NOOP_HOME").unwrap()+"tmp/cover_points.csv");
         // unsafe { display_uncovered_points() }
         panic!("<<<<<< Bug triggered >>>>>>");
     }
@@ -232,7 +232,7 @@ pub(crate) fn fuzz_harness(input: &BytesInput) -> ExitKind {
         // unsafe { close(stdout) };
 
         // store the accumulated coverage points
-        store_cover_points(env::var("COVER_POINTS_OUT").unwrap()+"/cover_points.csv");
+        store_cover_points(env::var("NOOP_HOME").unwrap()+"tmp/cover_points.csv");
 
         panic!("Exit due to fuzz_cover_rate < formal_cover_rate");
     }
@@ -253,7 +253,7 @@ pub(crate) fn fuzz_harness(input: &BytesInput) -> ExitKind {
         // unsafe { close(stdout) };
 
         // store the accumulated coverage points
-        store_cover_points(env::var("COVER_POINTS_OUT").unwrap()+"/cover_points.csv");
+        store_cover_points(env::var("NOOP_HOME").unwrap()+"tmp/cover_points.csv");
 
         panic!("Exit due to max_runs == 0");
     }
@@ -322,10 +322,10 @@ pub(crate) fn set_corpus_num(corpus_dir: String) {
     println!("Set init corpus runs:{}", count);
 }
 
-pub(crate) fn set_cover_points() {
+pub(crate) fn set_cover_points(cover_file_path: String) {
     // read the accumulated coverage points from the file
     unsafe { COVERAGE_CHECK_TIME = Some(Instant::now()) };
-    let cover_file_path = env::var("COVER_POINTS_OUT").unwrap()+"/cover_points.csv";
+    // let cover_file_path = env::var("BMCFUZZ_HOME").unwrap()+"/cover_points.csv";
     if fs::metadata(&cover_file_path).is_err() {
         println!("No cover points file found");
         return;
