@@ -207,7 +207,7 @@ pub(crate) fn fuzz_harness(input: &BytesInput) -> ExitKind {
     if do_panic {
         println!("<<<<<< Bug triggered >>>>>>");
         // store the accumulated coverage points
-        store_cover_points(env::var("NOOP_HOME").unwrap()+"tmp/cover_points.csv");
+        store_cover_points(env::var("NOOP_HOME").unwrap()+"/tmp/cover_points.csv");
         // unsafe { display_uncovered_points() }
         panic!("<<<<<< Bug triggered >>>>>>");
     }
@@ -232,7 +232,7 @@ pub(crate) fn fuzz_harness(input: &BytesInput) -> ExitKind {
         // unsafe { close(stdout) };
 
         // store the accumulated coverage points
-        store_cover_points(env::var("NOOP_HOME").unwrap()+"tmp/cover_points.csv");
+        store_cover_points(env::var("NOOP_HOME").unwrap()+"/tmp/cover_points.csv");
 
         panic!("Exit due to fuzz_cover_rate < formal_cover_rate");
     }
@@ -253,7 +253,7 @@ pub(crate) fn fuzz_harness(input: &BytesInput) -> ExitKind {
         // unsafe { close(stdout) };
 
         // store the accumulated coverage points
-        store_cover_points(env::var("NOOP_HOME").unwrap()+"tmp/cover_points.csv");
+        store_cover_points(env::var("NOOP_HOME").unwrap()+"/tmp/cover_points.csv");
 
         panic!("Exit due to max_runs == 0");
     }
