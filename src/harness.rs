@@ -82,7 +82,7 @@ fn sim_run_from_memory(input: &BytesInput) -> i32 {
     sim_run(&wim_name)
 }
 
-fn clone_to_run_sim(workload: &String) -> i32 {
+fn clone_to_run_sim(workload: &String, fuzz_run_id_dir: &String) -> i32 {
     let fuzzer = format!("{}/build/fuzzer", env::var("NOOP_HOME").unwrap());
     let image: String = workload.clone();
     // prepare the simulation arguments in Vec<String> format
@@ -104,7 +104,15 @@ fn clone_to_run_sim(workload: &String) -> i32 {
     println!("child stdout:\n{}\n", String::from_utf8_lossy(&ret.stdout));
     println!("child stderr:\n{}\n", String::from_utf8_lossy(&ret.stderr));
 
-    cover_accumulate_from_file();
+    let new_covered_num = cover_accumulate_from_file();
+    if new_covered_num > 0 {
+        println!("New covered points: {} during fuzzing", new_covered_num);
+        // store the new covered num into file
+        let new_covered_points_output = format!("{}/fuzz_coverage.csv", fuzz_run_id_dir);
+        let mut wtr = Writer::from_path(new_covered_points_output).unwrap();
+        wtr.write_record(&["New covered num", &new_covered_num.to_string()]).unwrap();
+        wtr.flush().unwrap();
+    }
 
     if ret.status.success() {
         return 0
@@ -183,7 +191,7 @@ pub(crate) fn fuzz_harness(input: &BytesInput) -> ExitKind {
         fs::create_dir_all(fuzz_run_id_dir.clone()+"/csr_snapshot").unwrap();
         fs::create_dir_all(fuzz_run_id_dir.clone()+"/csr_transition").unwrap();
         store_testcase(&new_input, &fuzz_run_dir, Some("fuzz_testcase".to_string()));
-        ret = clone_to_run_sim(&format!("{}/fuzz_testcase", fuzz_run_dir));
+        ret = clone_to_run_sim(&format!("{}/fuzz_testcase", fuzz_run_dir), &fuzz_run_id_dir);
     }
 
     // get coverage

@@ -73,10 +73,11 @@ impl Coverage {
         100.0 * covered_num as f64 / self.len() as f64
     }
 
-    pub fn accumulate_from_file(&mut self) {
+    pub fn accumulate_from_file(&mut self) -> usize {
         let cover_points_file = format!("{}/tmp/sim_run_cover_points.csv", env::var("NOOP_HOME").unwrap());
         let mut reader = Reader::from_path(cover_points_file).unwrap();
         reader.headers().unwrap();
+        let mut new_covered_num = 0;
         for record in reader.records() {
             let record = record.unwrap();
             let index: usize = record[0].parse().unwrap();
@@ -84,8 +85,10 @@ impl Coverage {
             if covered != 0 && self.accumulated[index] == 0 {
                 self.accumulated[index] = 1;
                 self.accumulated_num += 1;
+                new_covered_num += 1;
             }
         }
+        new_covered_num
     }
 
     pub fn display_coverage(&self) {
@@ -151,7 +154,7 @@ pub(crate) fn cover_accumulate() {
     unsafe { ICOVERAGE.as_mut().unwrap().accumulate() }
 }
 
-pub(crate) fn cover_accumulate_from_file() {
+pub(crate) fn cover_accumulate_from_file() -> usize {
     unsafe { ICOVERAGE.as_mut().unwrap().accumulate_from_file() }
 }
 
