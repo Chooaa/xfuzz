@@ -53,6 +53,9 @@ fn sim_run(workload: &String) -> i32 {
         .map(|s| s.to_string())
         .collect();
     unsafe { sim_args.extend(SIM_ARGS.iter().cloned()) };
+    let fuzz_id = unsafe { NUM_RUNS };
+    sim_args.push("--fuzz-id".to_string());
+    sim_args.push(fuzz_id.to_string());
 
     println!("Sim args: {:?}", sim_args);
 
@@ -182,21 +185,26 @@ pub(crate) fn fuzz_harness(input: &BytesInput) -> ExitKind {
         }
     } else {
         let fuzz_run_dir = format!("{}/tmp/fuzz_run", env::var("NOOP_HOME").unwrap());
-        let fuzz_run_id_dir = format!("{}/{}", fuzz_run_dir, fuzz_id);
-        if fs::read_dir(&fuzz_run_id_dir).is_ok() {
-            fs::remove_dir_all(&fuzz_run_id_dir).unwrap();
+        if fs::metadata(&fuzz_run_dir).is_err() {
+            fs::create_dir_all(fuzz_run_dir.clone()).unwrap();
         }
-        fs::create_dir_all(&fuzz_run_id_dir).unwrap();
-        fs::create_dir_all(fuzz_run_id_dir.clone()+"/csr_wave").unwrap();
-        fs::create_dir_all(fuzz_run_id_dir.clone()+"/csr_snapshot").unwrap();
-        fs::create_dir_all(fuzz_run_id_dir.clone()+"/csr_transition").unwrap();
-        store_testcase(&new_input, &fuzz_run_dir, Some("fuzz_testcase".to_string()));
-        ret = clone_to_run_sim(&format!("{}/fuzz_testcase", fuzz_run_dir), &fuzz_run_id_dir);
+        ret = sim_run_from_memory(&new_input);
+        // let fuzz_run_id_dir = format!("{}/{}", fuzz_run_dir, fuzz_id);
+        // if fs::read_dir(&fuzz_run_id_dir).is_ok() {
+        //     fs::remove_dir_all(&fuzz_run_id_dir).unwrap();
+        // }
+        // fs::create_dir_all(&fuzz_run_id_dir).unwrap();
+        // fs::create_dir_all(fuzz_run_id_dir.clone()+"/csr_wave").unwrap();
+        // fs::create_dir_all(fuzz_run_id_dir.clone()+"/csr_snapshot").unwrap();
+        // fs::create_dir_all(fuzz_run_id_dir.clone()+"/csr_transition").unwrap();
+        // store_testcase(&new_input, &fuzz_run_dir, Some("fuzz_testcase".to_string()));
+        // ret = clone_to_run_sim(&format!("{}/fuzz_testcase", fuzz_run_dir), &fuzz_run_id_dir);
     }
 
     // get coverage
     // cover_display();
     // io::stdout().flush().unwrap();
+    let cover_points_output = format!("{}/tmp/fuzz_coverage.csv", env::var("NOOP_HOME").unwrap());
 
     // save the target testcase into disk
     if ret != 0 {
@@ -215,7 +223,7 @@ pub(crate) fn fuzz_harness(input: &BytesInput) -> ExitKind {
     if do_panic {
         println!("<<<<<< Bug triggered >>>>>>");
         // store the accumulated coverage points
-        store_cover_points(env::var("NOOP_HOME").unwrap()+"/tmp/cover_points.csv");
+        store_cover_points(cover_points_output.clone());
         // unsafe { display_uncovered_points() }
         panic!("<<<<<< Bug triggered >>>>>>");
     }
@@ -240,7 +248,7 @@ pub(crate) fn fuzz_harness(input: &BytesInput) -> ExitKind {
         // unsafe { close(stdout) };
 
         // store the accumulated coverage points
-        store_cover_points(env::var("NOOP_HOME").unwrap()+"/tmp/cover_points.csv");
+        store_cover_points(cover_points_output.clone());
 
         panic!("Exit due to fuzz_cover_rate < formal_cover_rate");
     }
@@ -261,7 +269,7 @@ pub(crate) fn fuzz_harness(input: &BytesInput) -> ExitKind {
         // unsafe { close(stdout) };
 
         // store the accumulated coverage points
-        store_cover_points(env::var("NOOP_HOME").unwrap()+"/tmp/cover_points.csv");
+        store_cover_points(cover_points_output.clone());
 
         panic!("Exit due to max_runs == 0");
     }
@@ -279,6 +287,7 @@ pub(crate) fn set_sim_env(
     println!("cover type:{}", coverage);
     unsafe { COVER_NAME = Some(coverage) };
     unsafe { set_cover_feedback(cover_name.as_ptr()) }
+    unsafe { COVERAGE_CHECK_TIME = Some(Instant::now()) };
 
     if verbose {
         unsafe { enable_sim_verbose() }
@@ -332,7 +341,6 @@ pub(crate) fn set_corpus_num(corpus_dir: String) {
 
 pub(crate) fn set_cover_points(cover_file_path: String) {
     // read the accumulated coverage points from the file
-    unsafe { COVERAGE_CHECK_TIME = Some(Instant::now()) };
     // let cover_file_path = env::var("BMCFUZZ_HOME").unwrap()+"/cover_points.csv";
     if fs::metadata(&cover_file_path).is_err() {
         println!("No cover points file found");

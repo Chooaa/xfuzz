@@ -153,6 +153,11 @@ class CoverPointMaker(coverPoints: Seq[CoverInfo]) {
       return stmt
     }
     val w = getExprWidth(stmt.value.tpe)
+    if (info.name == "control" && w > 8) {
+      println(s"[CoverPoint] SKIP: ${m.name}.${stmt.name} (width=$w > 8)")
+      numSkippedPoints += 1
+      return stmt
+    }
     val (extModule, coverIndex) = getExtModule(info, w)
     val singleBit = w == 1 && !info.isRaw
     val count = if (singleBit || info.isMultibit) w else 1 << w
