@@ -156,7 +156,7 @@ object ToggleCoveragePass extends Transform with DependencyAPIMigration {
     annos:     Annos,
     namespace: Namespace,
     m:         ModuleTarget,
-    en:        ir.Reference,
+    en:        ir.Expression,
     clk:       ir.Expression,
     cover:     mutable.ListBuffer[CoverPointAnnotation])
 
@@ -177,18 +177,12 @@ object ToggleCoveragePass extends Transform with DependencyAPIMigration {
             case Some(clock) =>
               val namespace = Namespace(mod)
               namespace.newName(Prefix)
-              // create a module wide signal that indicates whether the toggle coverage is active
-              val en = ir.Reference(namespace.newName("enToggle"), Utils.BoolType, RegKind, UnknownFlow)
               val cover = mutable.ListBuffer[CoverPointAnnotation]()
-              val ctx = ModuleCtx(annos, namespace, c.module(mod.name), en, clock, cover)
-              val (enStmt, enAnno, en_past) = buildCoverEnable(ctx, opt.resetAware)
-              val ctx_past = ModuleCtx(annos, namespace, c.module(mod.name), en_past, clock, cover)
-              val (coverStmts, portAliases) = coverSignals(signals, aliases, ctx_past, isTop(mod.name))
+              val ctx = ModuleCtx(annos, namespace, c.module(mod.name), Utils.True(), clock, cover)
+              val (coverStmts, portAliases) = coverSignals(signals, aliases, ctx, isTop(mod.name))
               if(coverStmts.nonEmpty) {
-                // create actual hardware to generate enable signal
-
-                val body = ir.Block(mod.body, enStmt, ir.Block(coverStmts))
-                (mod.copy(body = body), portAliases, Some(enAnno), cover.toSeq)
+                val body = ir.Block(mod.body, ir.Block(coverStmts))
+                (mod.copy(body = body), portAliases, None, cover.toSeq)
               } else { (mod, portAliases, None, Seq()) }
           }
         }
@@ -257,27 +251,6 @@ object ToggleCoveragePass extends Transform with DependencyAPIMigration {
     }
   }
   private def getFields(t: ir.Type): Seq[ir.Field] = t.asInstanceOf[ir.BundleType].fields
-
-  private def buildCoverEnable(ctx: ModuleCtx, resetAware: Boolean): (ir.Statement, Seq[Annotation], ir.Reference) = {
-    assert(!resetAware, "TODO: reset aware")
-
-    // we add a simple register in order to disable toggle coverage in the first cycle
-    val ref = ctx.en
-    val reg = ir.DefRegister(ir.NoInfo, ref.name, Utils.BoolType, ctx.clk, Utils.False(), Utils.False())
-
-    // Add pastReg for cover statement begin
-    val pastRegName = ref.name + "_past"
-    val pastReg = ir.DefRegister(ir.NoInfo, pastRegName, Utils.BoolType, ctx.clk, Utils.False(), Utils.False())
-    val pastRegRef = ir.Reference(pastRegName, Utils.BoolType, RegKind, UnknownFlow)
-    val pastConnect = ir.Connect(ir.NoInfo, pastRegRef, ir.Reference(ref.name, Utils.BoolType, RegKind, UnknownFlow))
-    // Add pastReg for cover statement end
-    
-    val next = ir.Connect(ir.NoInfo, ref, Utils.True())
-    val presetAnno = PresetRegAnnotation(ctx.m.ref(reg.name))
-    val pastPresetAnno = PresetRegAnnotation(ctx.m.ref(pastReg.name))
-    // (ir.Block(reg, next), presetAnno)
-    (ir.Block(Seq(reg, pastReg, next, pastConnect)), Seq(presetAnno, pastPresetAnno), pastRegRef)
-  }
 
   private def coverSignals(signals: Signals, aliases: AliasAnalysis.Aliases, ctx: ModuleCtx, isTop: Boolean):
   (Seq[ir.Statement], PortAliases) = {
