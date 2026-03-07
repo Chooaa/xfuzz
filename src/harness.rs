@@ -351,11 +351,15 @@ pub(crate) fn set_cover_points(cover_file_path: String) {
     let mut accumulated_points = vec![0; len];
     // read header
     rdr.headers().unwrap();
+    let mut covered_num = 0;
     for result in rdr.records() {
         let record = result.unwrap();
         let idx = record[0].parse::<usize>().unwrap();
         let covered = record[1].parse::<i8>().unwrap();
+        if covered != 0 {
+            covered_num += 1;
+        }
         accumulated_points[idx] = covered;
     }
-    cover_set_accumulated(accumulated_points);
+    cover_set_accumulated(accumulated_points, covered_num);
 }

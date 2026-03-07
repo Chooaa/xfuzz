@@ -42,8 +42,10 @@ impl Coverage {
         }
     }
 
-    pub fn set_accumulated(&mut self, accumulated: Vec<i8>) {
+    pub fn set_accumulated(&mut self, accumulated: Vec<i8>, covered_num: usize) {
         self.accumulated = accumulated;
+        self.accumulated_num = covered_num;
+        self.pre_accumulated_num = covered_num;
     }
 
     pub fn len(&self) -> usize {
@@ -138,8 +140,8 @@ pub(crate) fn cover_init() {
     unsafe { ICOVERAGE = Some(Coverage::new(get_cover_number() as usize)) };
 }
 
-pub(crate) fn cover_set_accumulated(accumulated: Vec<i8>) {
-    unsafe { ICOVERAGE.as_mut().unwrap().set_accumulated(accumulated) }
+pub(crate) fn cover_set_accumulated(accumulated: Vec<i8>, covered_num: usize) {
+    unsafe { ICOVERAGE.as_mut().unwrap().set_accumulated(accumulated, covered_num) }
 }
 
 pub(crate) fn cover_len() -> usize {
