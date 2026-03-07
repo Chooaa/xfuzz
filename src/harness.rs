@@ -204,7 +204,7 @@ pub(crate) fn fuzz_harness(input: &BytesInput) -> ExitKind {
     // get coverage
     // cover_display();
     // io::stdout().flush().unwrap();
-    let cover_points_output = format!("{}/tmp/fuzz_coverage.csv", env::var("NOOP_HOME").unwrap());
+    let cover_points_output = format!("{}/tmp/fuzz_run/cover_points.csv", env::var("NOOP_HOME").unwrap());
 
     // save the target testcase into disk
     if ret != 0 {
